@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunger Games Reaping Simulator</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.8);
+            border: 3px solid #d4af37;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(212,175,55,0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #d4af37;
+            text-shadow: 2px 2px 4px black;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 2px solid #d4af37;
+        }
+        input {
+            background: #333;
+            color: white;
+        }
+        button {
+            background: #d4af37;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background: white;
+        }
+        .question {
+            background: #222;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #d4af37;
+        }
+        .options button {
+            width: 48%;
+            display: inline-block;
+            margin: 5px 1%;
+        }
+        .selected {
+            background: white !important;
+        }
+        .stat {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #d4af37;
+        }
+        .picked { color: #ff4444; font-size: 1.3em; }
+        .victor { color: #44ff44; font-size: 1.3em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 The Hunger Games Reaping Simulator</h1>
+       
+        <div id="page1" class="section active">
+            <h2 style="color: #d4af37;">Welcome, Tribute!</h2>
+            <p>Your answers will determine your district and how many times your name enters the reaping jar.</p>
+            <button onclick="showPage(2)">Begin Questionnaire</button>
+        </div>
+       
+        <div id="page2" class="section">
+            <h2 style="color: #d4af37;">Tell Us About Yourself</h2>
+           
+            <label>What is your name?</label>
+            <input type="text" id="name" placeholder="Enter your name">
+           
+            <div class="question">
+                <p><strong>1. What is your strongest skill?</strong></p>
+                <div class="options">
+                    <button onclick="answer('skill','combat',this)">Combat</button>
+                    <button onclick="answer('skill','survival',this)">Survival</button>
+                    <button onclick="answer('skill','strategy',this)">Strategy</button>
+                    <button onclick="answer('skill','other',this)">Other</button>
+                </div>
+            </div>
+           
+            <div class="question">
+                <p><strong>2. Your personality type?</strong></p>
+                <div class="options">
+                    <button onclick="answer('personality','bold',this)">Bold & Brave</button>
+                    <button onclick="answer('personality','clever',this)">Clever & Cunning</button>
+                    <button onclick="answer('personality','kind',this)">Kind & Loyal</button>
+                    <button onclick="answer('personality','quiet',this)">Quiet & Observant</button>
+                </div>
+            </div>
+           
+            <div class="question">
+                <p><strong>3. What's your biggest fear?</strong></p>
+                <div class="options">
+                    <button onclick="answer('fear','failure',this)">Failure</button>
+                    <button onclick="answer('fear','unknown',this)">The Unknown</button>
+                    <button onclick="answer('fear','losing',this)">Losing Loved Ones</button>
+                    <button onclick="answer('fear','none',this)">I Don't Show Fear</button>
+                </div>
+            </div>
+           
+            <div class="question">
+                <p><strong>4. Where would you want to live?</strong></p>
+                <div class="options">
+                    <button onclick="answer('location','mountains',this)">Mountains</button>
+                    <button onclick="answer('location','coast',this)">Coast</button>
+                    <button onclick="answer('location','forest',this)">Forest</button>
+                    <button onclick="answer('location','city',this)">City</button>
+                </div>
+            </div>
+           
+            <button onclick="calculate()">Go to Reaping</button>
+        </div>
+       
+        <div id="page3" class="section">
+            <h2 style="color: #d4af37;">The Reaping Has Begun!</h2>
+            <div id="reapingInfo"></div>
+            <button onclick="drawFate()">Draw Your Fate</button>
+        </div>
+       
+        <div id="page4" class="section">
+            <h2 style="color: #d4af37;">Your Results</h2>
+            <div id="results"></div>
+            <button onclick="restart()">Start Over</button>
+        </div>
+    </div>
+
+    <script>
+        let data = {};
+        let district = "";
+        let entries = 0;
+       
+        function showPage(num) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('page' + num).classList.add('active');
+        }
+       
+        function answer(question, value, btn) {
+            data[question] = value;
+            btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+       
+        function calculate() {
+            let name = document.getElementById('name').value;
+            if (!name || !data.skill || !data.personality || !data.fear || !data.location) {
+                alert('Please answer all questions!');
+                return;
+            }
+           
+            // Calculate district
+            let districts = {
+                combat: "District 1 (Luxury Items)",
+                survival: "District 4 (Fishing)",
+                strategy: "District 2 (Masonry)",
+                other: "District 12 (Coal Mining)"
+            };
+            district = districts[data.skill] || "District 12 (Coal Mining)";
+           
+            // Calculate entries - HIGHER NUMBERS NOW
+            entries = 5;  // Base starts at 5 instead of 1
+            if (data.personality === 'bold') entries += 8;
+            if (data.personality === 'clever') entries += 5;
+            if (data.personality === 'kind') entries += 6;
+            if (data.personality === 'quiet') entries += 4;
+            if (data.fear === 'failure') entries += 5;
+            if (data.fear === 'unknown') entries += 4;
+            if (data.fear === 'losing') entries += 6;
+            if (data.location === 'city') entries += 7;
+            if (data.location === 'mountains') entries += 5;
+           
+            let odds = Math.min(entries * 3, 85);  // Multiplied by 3, capped at 85%
+           
+            document.getElementById('reapingInfo').innerHTML = `
+                <div class="stat"><strong>Name:</strong> ${name}</div>
+                <div class="stat"><strong>District:</strong> ${district}</div>
+                <div class="stat"><strong>Reaping Jar Entries:</strong> ${entries}</div>
+                <div class="stat"><strong>Odds of Being Picked:</strong> ${odds}%</div>
+                <p style="margin-top: 20px; font-style: italic;">When you're ready, click below to discover your fate...</p>
+            `;
+           
+            showPage(3);
+        }
+       
+        function drawFate() {
+            let name = document.getElementById('name').value;
+            let odds = Math.min(entries * 3, 85);  // Same calculation
+            let picked = Math.random() * 100 < odds;
+           
+            let deaths = [
+                "brutally defeated in an early bloodbath",
+                "caught in a trap set by a Career tribute",
+                "succumbed to injuries from a tracker jacker swarm",
+                "drowned while trying to escape",
+                "perished from starvation and exhaustion",
+                "died in a forest fire",
+                "killed by mutant creatures",
+                "defeated in combat at the Cornucopia",
+                "struck down by a storm from the Gamemakers",
+                "eliminated in the final battle"
+            ];
+           
+            let html = `
+                <div class="stat"><strong>District:</strong> ${district}</div>
+                <div class="stat"><strong>Entries:</strong> ${entries}</div>
+            `;
+           
+            if (picked) {
+                let placement = Math.floor(Math.random() * 24) + 1;
+                if (placement === 1) {
+                    html += `
+                        <p class="victor" style="margin-top: 20px;">🏆 YOUR NAME WAS DRAWN! 🏆</p>
+                        <p class="victor">YOU ARE THE VICTOR!</p>
+                        <p style="margin-top: 15px;">Against all odds, you survived the arena and returned home as champion. Your name will be remembered throughout Panem!</p>
+                    `;
+                } else {
+                    let death = deaths[Math.floor(Math.random() * deaths.length)];
+                    html += `
+                        <p class="picked" style="margin-top: 20px;">YOUR NAME WAS DRAWN!</p>
+                        <div class="stat"><strong>Placement:</strong> Died in ${placement}${placement===1?'st':placement===2?'nd':placement===3?'rd':'th'} place</div>
+                        <p style="margin-top: 15px;">You ${death}.</p>
+                        <p>May the odds be ever in your favor.</p>
+                    `;
+                }
+            } else {
+                html += `
+                    <p class="victor" style="margin-top: 20px;">YOU WERE NOT SELECTED!</p>
+                    <p style="margin-top: 15px;">Your name was not drawn. You live to see another year.</p>
+                `;
+            }
+           
+            document.getElementById('results').innerHTML = html;
+            showPage(4);
+        }
+       
+        function restart() {
+            data = {};
+            district = "";
+            entries = 0;
+            document.getElementById('name').value = "";
+            document.querySelectorAll('button.selected').forEach(b => b.classList.remove('selected'));
+            showPage(1);
+        }
+    </script>
+</body>
+</html>
